@@ -1,15 +1,21 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { useChat } from '@ai-sdk/react';
 import { MessageSquare, X, Send, Bot, User, Loader2 } from 'lucide-react';
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll al último mensaje
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -18,7 +24,6 @@ export default function ChatWidget() {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  // Bloquear scroll de fondo en móviles cuando está abierto
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -29,6 +34,74 @@ export default function ChatWidget() {
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input.trim(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages, userMessage].map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+        }),
+      });
+
+      if (!response.ok) throw new Error('Error en la respuesta del servidor');
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = '';
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: '',
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          assistantContent += chunk;
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMessage.id
+                ? { ...m, content: assistantContent }
+                : m
+            )
+          );
+        }
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 2).toString(),
+          role: 'assistant',
+          content: 'Lo siento, ocurrió un error. Por favor intenta nuevamente o contacta a info@cotolar.org.ar.',
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <>
@@ -43,7 +116,7 @@ export default function ChatWidget() {
         <MessageSquare className="w-7 h-7" />
       </button>
 
-      {/* Interfaz de Chat (Expansible) */}
+      {/* Interfaz de Chat */}
       <div
         className={`fixed z-50 transition-all duration-300 ease-in-out flex flex-col bg-white shadow-2xl border border-gray-200
           ${
@@ -51,11 +124,10 @@ export default function ChatWidget() {
               ? 'translate-y-0 opacity-100'
               : 'translate-y-10 opacity-0 pointer-events-none'
           }
-          /* Diseño Mobile-First: Pantalla completa en móviles, ventanita flotante en desktop */
           inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-96 sm:h-[600px] sm:rounded-2xl
         `}
       >
-        {/* Cabecera del Chat */}
+        {/* Cabecera */}
         <div className="flex items-center justify-between p-4 bg-[#0f3460] text-white sm:rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/10 rounded-full">
@@ -100,7 +172,7 @@ export default function ChatWidget() {
                 </span>
                 {m.role === 'user' && <User className="w-4 h-4 text-gray-400" />}
               </div>
-              
+
               <div
                 className={`p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
                   m.role === 'user'
@@ -108,52 +180,48 @@ export default function ChatWidget() {
                     : 'bg-white border border-gray-100 text-gray-800 rounded-bl-none'
                 }`}
               >
-                {/* Herramientas (Razonamiento de IA) */}
-                {m.toolInvocations?.map(tool => (
-                  <div key={tool.toolCallId} className="mb-2 text-xs text-blue-600 bg-blue-50 p-2 rounded flex items-center gap-2 border border-blue-100">
+                {m.content || (isLoading && m.role === 'assistant' ? (
+                  <div className="flex items-center gap-2">
                     <Loader2 className="w-3 h-3 animate-spin" />
-                    <i>Consultando base de datos ({tool.toolName})...</i>
+                    <span>Pensando...</span>
                   </div>
-                ))}
-                
-                {/* Texto del mensaje */}
-                {m.content}
+                ) : '')}
               </div>
             </div>
           ))}
-          
-          {isLoading && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
+
+          {isLoading && messages[messages.length - 1]?.role === 'user' && (
             <div className="mr-auto items-start flex max-w-[85%]">
-               <div className="p-3 bg-white border border-gray-100 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-2">
-                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-               </div>
+              <div className="p-3 bg-white border border-gray-100 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-2">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Formulario de Input */}
+        {/* Input */}
         <div className="p-4 bg-white border-t sm:rounded-b-2xl">
           <form onSubmit={handleSubmit} className="flex gap-2 relative">
             <input
               value={input}
-              onChange={handleInputChange}
+              onChange={(e) => setInput(e.target.value)}
               placeholder="Escribe tu consulta aquí..."
               className="flex-1 bg-gray-100 text-gray-800 text-sm rounded-full pl-5 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-[#1abc9c] transition-shadow"
               disabled={isLoading}
             />
             <button
               type="submit"
-              disabled={isLoading || !input?.trim()}
+              disabled={isLoading || !input.trim()}
               className="absolute right-1 top-1 bottom-1 aspect-square bg-[#0f3460] hover:bg-[#1a5276] text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-4 h-4 ml-0.5" />
             </button>
           </form>
           <div className="text-center mt-2">
-             <span className="text-[10px] text-gray-400">Desarrollado con IA (Gemini 2.5 Flash)</span>
+            <span className="text-[10px] text-gray-400">Desarrollado con IA (Gemini 2.5 Flash)</span>
           </div>
         </div>
       </div>
