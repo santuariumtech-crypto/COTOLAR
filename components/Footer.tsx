@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, Phone, Mail, ExternalLink } from "lucide-react";
+import { MapPin, Phone, Mail, ExternalLink, Instagram, Facebook } from "lucide-react";
 import LogoCotolar from "@/components/LogoCotolar";
 
 const quickLinks = [
@@ -34,6 +34,26 @@ export default function Footer() {
               Acceso Webmail
               <ExternalLink className="w-3 h-3 opacity-60" />
             </a>
+            <div className="flex items-center gap-4 pt-2">
+              <a
+                href="https://www.instagram.com/cotolar_/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#1abc9c] flex items-center justify-center transition-all hover:scale-110"
+                aria-label="Instagram COTOLAR"
+              >
+                <Instagram className="w-5 h-5 text-white" />
+              </a>
+              <a
+                href="https://www.facebook.com/coptorlarioja/?locale=es_LA"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#2471a3] flex items-center justify-center transition-all hover:scale-110"
+                aria-label="Facebook COTOLAR"
+              >
+                <Facebook className="w-5 h-5 text-white" />
+              </a>
+            </div>
           </div>
 
           {/* Columna 2: Links rápidos */}
