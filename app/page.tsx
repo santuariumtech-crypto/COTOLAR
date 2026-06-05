@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import HeroSection from "@/components/HeroSection";
+import HeroCarousel from "@/components/HeroCarousel";
+import BannersSection from "@/components/BannersSection";
 import NewsSection from "@/components/NewsSection";
 import Link from "next/link";
 import { ShieldCheck, FileText, Phone } from "lucide-react";
@@ -37,7 +38,8 @@ const servicios = [
 export default function HomePage() {
   return (
     <>
-      <HeroSection />
+      <HeroCarousel />
+      <BannersSection />
 
       {/* Sección de servicios */}
       <section className="bg-white py-16 border-b border-gray-100">
