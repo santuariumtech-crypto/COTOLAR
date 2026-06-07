@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, Mail } from "lucide-react";
+import { Menu, X, Mail, LayoutDashboard } from "lucide-react";
 import LogoCotolar from "@/components/LogoCotolar";
 
 const navLinks = [
   { href: "/", label: "Inicio" },
   { href: "/institucional", label: "Institucional" },
   { href: "/matriculados", label: "Matriculados" },
+  { href: "/denuncias", label: "Denuncias" },
   { href: "/contacto", label: "Contacto" },
 ];
 
@@ -55,14 +56,21 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Botón Webmail + Hamburguesa */}
-          <div className="flex items-center gap-3">
+          {/* Botones Portal + Webmail + Hamburguesa */}
+          <div className="flex items-center gap-2">
+            <Link
+              href="/portal"
+              className="hidden sm:flex items-center gap-1.5 bg-[#1abc9c] hover:bg-[#17a589] text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 group"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Portal
+            </Link>
             <a
               href="#"
               className="hidden sm:flex items-center gap-2 bg-[#0f3460] hover:bg-[#1a5276] text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 group"
             >
               <Mail className="w-4 h-4 group-hover:animate-bounce" />
-              Acceso Webmail
+              Webmail
             </a>
 
             {/* Menú hamburguesa (móvil) */}
@@ -89,7 +97,15 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <div className="pt-2 px-4">
+            <div className="pt-2 px-4 space-y-2">
+              <Link
+                href="/portal"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-center gap-2 bg-[#1abc9c] text-white text-sm font-semibold px-4 py-2.5 rounded-lg w-full"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Portal del Matriculado
+              </Link>
               <a
                 href="#"
                 className="flex items-center justify-center gap-2 bg-[#0f3460] text-white text-sm font-semibold px-4 py-2.5 rounded-lg w-full"

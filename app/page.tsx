@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
-import HeroCarousel from "@/components/HeroCarousel";
-import BannersSection from "@/components/BannersSection";
-import NewsSection from "@/components/NewsSection";
 import Link from "next/link";
-import { ShieldCheck, FileText, Phone } from "lucide-react";
+import { ShieldCheck, FileText, Phone, LayoutDashboard, AlertTriangle } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Inicio",
+  title: "Inicio | COTOLAR",
   description:
     "Bienvenido al COTOLAR, Colegio de Terapia Ocupacional de La Rioja. Encontrá profesionales habilitados, requisitos de matriculación y novedades institucionales.",
 };
@@ -35,6 +32,10 @@ const servicios = [
   },
 ];
 
+import HeroCarousel from "@/components/HeroCarousel";
+import BannersSection from "@/components/BannersSection";
+import NewsSection from "@/components/NewsSection";
+
 export default function HomePage() {
   return (
     <>
@@ -61,6 +62,81 @@ export default function HomePage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PORTAL DEL MATRICULADO ── */}
+      <section className="bg-gradient-to-br from-[#0f3460] via-[#1a5276] to-[#0f3460] py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            {/* Left text */}
+            <div>
+              <span className="inline-block bg-[#1abc9c]/20 text-[#1abc9c] border border-[#1abc9c]/30 text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-4">
+                Exclusivo para profesionales matriculados
+              </span>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4 leading-tight">
+                Portal de Autogestión del Matriculado
+              </h2>
+              <p className="text-blue-200 text-lg leading-relaxed mb-8">
+                Gestioná tu perfil, seguí el estado de tu matrícula, subí documentación y realizá tus trámites online — sin ir al colegio.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/portal"
+                  className="inline-flex items-center justify-center gap-2 bg-[#1abc9c] hover:bg-[#17a589] text-white font-bold px-7 py-4 rounded-xl shadow-lg shadow-teal-500/20 transition-all hover:-translate-y-0.5 text-sm"
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                  Acceder al Portal
+                </Link>
+                <Link
+                  href="/institucional"
+                  className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/25 text-white font-semibold px-7 py-4 rounded-xl transition-all hover:-translate-y-0.5 text-sm backdrop-blur-sm"
+                >
+                  ¿Cómo matricularme?
+                </Link>
+              </div>
+            </div>
+
+            {/* Right — feature cards */}
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { icon: "👤", title: "Mi Perfil", desc: "Actualizá tus datos personales y académicos." },
+                { icon: "📋", title: "Mis Trámites", desc: "Seguí el estado de tu matriculación paso a paso." },
+                { icon: "📎", title: "Documentación", desc: "Subí tus certificados y comprobantes online." },
+                { icon: "💳", title: "Pagos", desc: "Adherí a débito automático y descargá tu credencial." },
+              ].map((f, i) => (
+                <div key={i} className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-5 hover:bg-white/15 transition-all">
+                  <span className="text-2xl mb-2 block">{f.icon}</span>
+                  <p className="text-white font-bold text-sm mb-1">{f.title}</p>
+                  <p className="text-blue-200 text-xs leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── DENUNCIAS CTA ── */}
+      <section className="bg-slate-50 py-14 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center gap-8 bg-white rounded-3xl border border-slate-200 shadow-sm p-8 md:p-10">
+            <div className="w-16 h-16 rounded-2xl bg-rose-50 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-8 h-8 text-rose-500" />
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <h2 className="text-xl font-extrabold text-[#0f3460] mb-2">¿Ejercicio ilegal de la profesión?</h2>
+              <p className="text-slate-500 text-sm leading-relaxed max-w-2xl">
+                Si conocés un caso de ejercicio ilegal, usurpación de título o consultorio no habilitado de Terapia Ocupacional en La Rioja, podés denunciarlo de forma confidencial al COTOLAR.
+              </p>
+            </div>
+            <Link
+              href="/denuncias"
+              className="flex-shrink-0 inline-flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white font-bold px-6 py-3.5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 text-sm"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              Hacer una denuncia
+            </Link>
           </div>
         </div>
       </section>
