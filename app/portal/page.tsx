@@ -21,6 +21,7 @@ type ProfileData = {
   apellido?: string;
   matricula?: string;
   fecha_egreso?: string;
+  dni?: string;
 };
 
 export default function PortalHomePage() {
@@ -44,7 +45,7 @@ export default function PortalHomePage() {
 
   const donePasos = steps.filter(Boolean).length;
   const progress = Math.round((donePasos / 4) * 100);
-  const isActiva = tramite?.estado === "activa" || tramite?.paso_4_done;
+  const isActiva = Boolean(tramite?.estado === "activa" || tramite?.paso_4_done);
 
   const nombreCompleto = profile
     ? `${profile.nombre || ""} ${profile.apellido || ""}`.trim() || "Matriculado/a"

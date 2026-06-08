@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, User, FileText, LogOut,
   Menu, X, ChevronRight, CreditCard, MessageSquare
