@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Mail, Settings, LogOut, Activity, Image } from "lucide-react";
+import { LayoutDashboard, Users, Mail, Settings, LogOut, Activity, Image, FileText } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Matriculados", href: "/admin/matriculados", icon: Users },
+  { name: "Trámites", href: "/admin/tramite", icon: FileText },
   { name: "Mensajes", href: "/admin/mensajes", icon: Mail },
   { name: "Imágenes", href: "/admin/imagenes", icon: Image },
   { name: "Configuración", href: "/admin/settings", icon: Settings },
 ];
+
 
 export default function Sidebar() {
   const pathname = usePathname();
