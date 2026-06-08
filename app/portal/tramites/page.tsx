@@ -73,8 +73,8 @@ function MiniDropZone({ label, bucket, path, onUploadDone, defaultDone }: {
 
 // ─── Step Content ─────────────────────────────────────────────────────────────
 
-function StepContent({ stepId, tramite, onComplete }: {
-  stepId: number; tramite: TramiteData; onComplete: (updates: Partial<TramiteData>) => void
+function StepContent({ stepId, tramite, config, onComplete }: {
+  stepId: number; tramite: TramiteData; config: Record<string, string>; onComplete: (updates: Partial<TramiteData>) => void
 }) {
   const [saving, setSaving] = useState(false);
   const [antecedentesUrl, setAntecedentesUrl] = useState(tramite.antecedentes_url || "");
@@ -144,19 +144,21 @@ function StepContent({ stepId, tramite, onComplete }: {
   if (stepId === 4) {
     const handlePay = async () => {
       setSaving(true);
-      await new Promise(r => setTimeout(r, 1500));
       try {
-        const updates: Partial<TramiteData> = { paso_4_done: true, estado: "activa" };
-        await fetch("/api/portal/tramites", {
-          method: "PUT",
+        const res = await fetch("/api/checkout", {
+          method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updates),
+          body: JSON.stringify({ application_id: tramite.id, matricula: "0423" }), // Mock matricula '0423' for now
         });
-        toast.success("🎉 ¡Matrícula activada! ¡Felicitaciones!");
-        onComplete(updates);
+        const data = await res.json();
+        
+        if (data.init_point) {
+          window.location.href = data.init_point;
+        } else {
+          toast.error("Error al generar el link de pago");
+        }
       } catch {
-        toast.error("Error al confirmar el pago");
-      } finally {
+        toast.error("Error al iniciar el pago");
         setSaving(false);
       }
     };
@@ -188,11 +190,10 @@ function StepContent({ stepId, tramite, onComplete }: {
         <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
           <div className="flex justify-between items-center mb-3">
             <span className="text-sm font-semibold text-slate-700">Derecho de inscripción</span>
-            <span className="text-lg font-extrabold text-[#0f3460]">$15.000</span>
+            <span className="text-lg font-extrabold text-[#0f3460]">${parseInt(config.monto_inscripcion || "15000").toLocaleString('es-AR')}</span>
           </div>
           <div className="space-y-2 text-xs text-slate-500 border-t border-slate-200 pt-3">
-            <div className="flex justify-between"><span>Matrícula inicial</span><span>$10.000</span></div>
-            <div className="flex justify-between"><span>Credencial profesional</span><span>$5.000</span></div>
+            <div className="flex justify-between"><span>Valor configurado por el colegio</span><span>ARS</span></div>
           </div>
         </div>
         <div className="space-y-2">
@@ -203,7 +204,7 @@ function StepContent({ stepId, tramite, onComplete }: {
           <button onClick={handlePay} disabled={saving}
             className="flex items-center justify-center gap-2 px-5 py-3 bg-[#1abc9c] hover:bg-[#17a589] text-white text-sm font-semibold rounded-xl transition-all shadow-sm">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-            Pagar online (simulado)
+            Pagar online (Mercado Pago)
           </button>
           <button onClick={handleVoucher} disabled={saving || !comprobanteUrl}
             className="flex items-center justify-center gap-2 px-5 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-xl transition-all disabled:opacity-40">
@@ -228,16 +229,24 @@ const STEP_CONFIG = [
 ];
 
 export default function TramitesPage() {
-  const [tramite, setTramite] = useState<TramiteData>({
+  const [tramite, setTramite] = useState<TramiteData & { id?: string }>({
     paso_1_done: false, paso_2_done: false, paso_3_done: false, paso_4_done: false, estado: "en_tramite",
   });
+  const [config, setConfig] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const fetchTramite = useCallback(async () => {
     try {
-      const res = await fetch("/api/portal/tramites");
-      const data = await res.json();
+      const [resTramite, resConfig] = await Promise.all([
+        fetch("/api/portal/tramites"),
+        fetch("/api/admin/config")
+      ]);
+      const data = await resTramite.json();
+      const configData = await resConfig.json();
+      
+      setConfig(configData);
+      
       if (data) {
         setTramite(data);
         // auto-expand first incomplete step
@@ -338,7 +347,7 @@ export default function TramitesPage() {
               {isExpanded && (
                 <div className="px-5 pb-5 border-t border-slate-100">
                   <div className="pt-4">
-                    <StepContent stepId={step.id} tramite={tramite} onComplete={handleComplete} />
+                    <StepContent stepId={step.id} tramite={tramite} config={config} onComplete={handleComplete} />
                   </div>
                 </div>
               )}

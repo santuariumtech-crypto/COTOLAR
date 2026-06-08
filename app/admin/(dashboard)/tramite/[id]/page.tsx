@@ -1,30 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast, Toaster } from "sonner";
 import {
-  ArrowLeft, User, GraduationCap, FileText, CreditCard,
+  ArrowLeft, User, FileText, CreditCard,
   CheckCircle, XCircle, AlertTriangle, Pencil, Save,
   X, ExternalLink, RotateCcw, ShieldCheck, Loader2,
 } from "lucide-react";
 import {
-  MOCK_MATRICULADOS, ESTADO_TRAMITE_STYLES, ESTADO_MATRICULA_STYLES,
-  ESTADO_PAGO_STYLES, type Matriculado, type EstadoTramite, type EstadoMatricula,
+  ESTADO_TRAMITE_STYLES, ESTADO_MATRICULA_STYLES,
+  ESTADO_PAGO_STYLES, type EstadoTramite, type EstadoMatricula,
 } from "@/lib/admin-mock";
-
-// ─── Mock documents ───────────────────────────────────────────────────────────
-const MOCK_DOCS = [
-  { id: 'd1', tipo: 'DNI Frente',             estado: 'valido',    url: '/hero1.png' },
-  { id: 'd2', tipo: 'DNI Dorso',              estado: 'valido',    url: '/hero2.png' },
-  { id: 'd3', tipo: 'Título Universitario',   estado: 'pendiente', url: null },
-  { id: 'd4', tipo: 'Analítico',              estado: 'pendiente', url: null },
-  { id: 'd5', tipo: 'Cert. Antecedentes',     estado: 'invalido',  url: '/hero1.png' },
-];
-
-type DocEstado = 'pendiente' | 'valido' | 'invalido';
-type Doc = typeof MOCK_DOCS[0];
 
 // ─── Helper Components ────────────────────────────────────────────────────────
 
@@ -36,7 +24,7 @@ function Badge({ label, className }: { label: string; className: string }) {
   );
 }
 
-function InfoRow({ label, value }: { label: string; value?: string }) {
+function InfoRow({ label, value }: { label: string; value?: string | null }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-4 py-2.5 border-b border-slate-100 last:border-0">
       <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide w-36 flex-shrink-0">{label}</span>
@@ -50,25 +38,37 @@ function InfoRow({ label, value }: { label: string; value?: string }) {
 export default function TramiteDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const router = useRouter();
 
-  const [user, setUser] = useState<Matriculado | null>(null);
-  const [docs, setDocs] = useState<Doc[]>(MOCK_DOCS);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [app, setApp] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(searchParams.get('edit') === '1');
-  const [editData, setEditData] = useState<Partial<Matriculado>>({});
+  const [editData, setEditData] = useState<Record<string, string>>({});
   const [rechazarModal, setRechazarModal] = useState(false);
   const [notaRechazo, setNotaRechazo] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const found = MOCK_MATRICULADOS.find(m => m.id === params.id);
-    if (found) {
-      setUser(found);
-      setEditData(found);
-    }
+    fetch(`/api/admin/applications/${params.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.error) {
+          setApp(data);
+          setEditData(data.user_profiles || {});
+        }
+      })
+      .finally(() => setLoading(false));
   }, [params.id]);
 
-  if (!user) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-32">
+        <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (!app) {
     return (
       <div className="flex items-center justify-center py-32 text-slate-400">
         <div className="text-center">
@@ -80,43 +80,74 @@ export default function TramiteDetailPage() {
     );
   }
 
-  const tramiteStyle = ESTADO_TRAMITE_STYLES[user.tramite];
-  const estadoStyle = ESTADO_MATRICULA_STYLES[user.estado];
-  const pagoStyle = user.estadoPago ? ESTADO_PAGO_STYLES[user.estadoPago] : ESTADO_PAGO_STYLES['null'];
+  const user = app.user_profiles || {};
+  const tramiteStyle = ESTADO_TRAMITE_STYLES[app.estado as keyof typeof ESTADO_TRAMITE_STYLES] || ESTADO_TRAMITE_STYLES.pendiente_datos;
+  const estadoStyle = ESTADO_MATRICULA_STYLES[user.estado as keyof typeof ESTADO_MATRICULA_STYLES] || ESTADO_MATRICULA_STYLES.en_tramite;
+  
+  const lastPayment = app.payments?.[app.payments.length - 1];
+  const pagoStyle = lastPayment ? ESTADO_PAGO_STYLES[lastPayment.estado as keyof typeof ESTADO_PAGO_STYLES] : ESTADO_PAGO_STYLES['null'];
+
+  const docs = app.documents || [];
 
   // ── Actions ──────────────────────────────────────────────────────────────────
 
   const cambiarEstadoTramite = async (nuevoEstado: EstadoTramite, nota?: string) => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 1000));
-    setUser(prev => prev ? { ...prev, tramite: nuevoEstado, notas: nota || prev.notas } : prev);
-    toast.success(`Estado del trámite actualizado a: ${ESTADO_TRAMITE_STYLES[nuevoEstado].label}`);
-    setSaving(false);
+    try {
+      const res = await fetch(`/api/admin/applications/${app.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: nuevoEstado, notas_admin: nota || app.notas_admin }),
+      });
+      if (res.ok) {
+        setApp((prev: any) => ({ ...prev, estado: nuevoEstado, notas_admin: nota || prev.notas_admin }));
+        toast.success(`Estado del trámite actualizado a: ${ESTADO_TRAMITE_STYLES[nuevoEstado].label}`);
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const cambiarEstadoDoc = (docId: string, nuevoEstado: DocEstado) => {
-    setDocs(prev => prev.map(d => d.id === docId ? { ...d, estado: nuevoEstado } : d));
-    toast.success(`Documento actualizado: ${nuevoEstado === 'valido' ? 'Válido ✓' : 'Inválido ✗'}`);
+  const handleEstadoMatriculaChange = async (nuevoEstado: EstadoMatricula) => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/applications/${app.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estadoMatricula: nuevoEstado, matricula: user.matricula }),
+      });
+      if (res.ok) {
+        setApp((prev: any) => ({
+          ...prev,
+          user_profiles: { ...prev.user_profiles, estado: nuevoEstado }
+        }));
+        toast.success("Estado de matrícula actualizado");
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSaveEdit = async () => {
+    // Note: To fully implement edit we need a PUT /api/admin/users route, 
+    // for now we'll simulate the state update on frontend
     setSaving(true);
     await new Promise(r => setTimeout(r, 1000));
-    setUser(prev => prev ? { ...prev, ...editData } : prev);
+    setApp((prev: any) => ({ ...prev, user_profiles: { ...prev.user_profiles, ...editData } }));
     setIsEditing(false);
     setSaving(false);
-    toast.success("Datos actualizados correctamente");
+    toast.success("Datos actualizados correctamente (Simulado)");
   };
 
   const handleRechazar = async () => {
     if (!notaRechazo.trim()) { toast.error("Ingresá el motivo del rechazo"); return; }
     await cambiarEstadoTramite('rechazado', notaRechazo);
-    setUser(prev => prev ? { ...prev, estado: 'inactivo' as EstadoMatricula } : prev);
+    handleEstadoMatriculaChange('inactivo');
     setRechazarModal(false);
     setNotaRechazo("");
   };
 
-  const docsValidados = docs.filter(d => d.estado === 'valido').length;
+  const docsValidados = docs.filter((d: any) => d.estado_verificacion === 'valido').length;
   const docsTotal = docs.length;
 
   return (
@@ -126,12 +157,12 @@ export default function TramiteDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <Link href="/admin/matriculados" className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">
+          <Link href="/admin/tramite" className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-slate-900">{user.apellido}, {user.nombre}</h1>
-            <p className="text-sm text-slate-500">Matrícula N° {user.matricula} · DNI {user.dni}</p>
+            <h1 className="text-xl font-bold text-slate-900">{user.apellido || ''}, {user.nombre || ''}</h1>
+            <p className="text-sm text-slate-500">Matrícula N° {app.matricula} · DNI {user.dni}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -159,18 +190,18 @@ export default function TramiteDetailPage() {
       </div>
 
       {/* Nota de rechazo */}
-      {user.notas && user.tramite === 'rechazado' && (
+      {app.notas_admin && app.estado === 'rechazado' && (
         <div className="flex items-start gap-3 bg-rose-50 border border-rose-200 rounded-2xl p-4">
           <XCircle className="h-5 w-5 text-rose-500 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-sm font-semibold text-rose-800">Motivo de rechazo</p>
-            <p className="text-sm text-rose-700 mt-0.5">{user.notas}</p>
+            <p className="text-sm text-rose-700 mt-0.5">{app.notas_admin}</p>
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* LEFT column: Personal + Academic */}
+        {/* LEFT column: Personal */}
         <div className="lg:col-span-2 space-y-5">
 
           {/* Datos Personales */}
@@ -182,7 +213,7 @@ export default function TramiteDetailPage() {
             <div className="px-6 py-4">
               {!isEditing ? (
                 <>
-                  <InfoRow label="Nombre" value={`${user.nombre} ${user.apellido}`} />
+                  <InfoRow label="Nombre" value={`${user.nombre || ''} ${user.apellido || ''}`} />
                   <InfoRow label="DNI" value={user.dni} />
                   <InfoRow label="CUIT" value={user.cuit} />
                   <InfoRow label="Email" value={user.email} />
@@ -202,7 +233,7 @@ export default function TramiteDetailPage() {
                     <div key={f.key}>
                       <label className="text-xs font-semibold text-slate-600 block mb-1">{f.label}</label>
                       <input
-                        value={(editData as Record<string, string>)[f.key] || ''}
+                        value={editData[f.key] || ''}
                         onChange={e => setEditData(prev => ({ ...prev, [f.key]: e.target.value }))}
                         className="w-full h-9 px-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                       />
@@ -221,41 +252,6 @@ export default function TramiteDetailPage() {
             </div>
           </div>
 
-          {/* Datos Académicos */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="flex items-center gap-2 px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-              <GraduationCap className="h-4 w-4 text-teal-500" />
-              <h2 className="font-semibold text-slate-900 text-sm">Datos Académicos</h2>
-            </div>
-            <div className="px-6 py-4">
-              {!isEditing ? (
-                <>
-                  <InfoRow label="Universidad" value={user.universidad} />
-                  <InfoRow label="Título" value={user.titulo} />
-                  <InfoRow label="Fecha de egreso" value={user.fechaEgreso} />
-                </>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    { key: 'universidad', label: 'Universidad' },
-                    { key: 'titulo', label: 'Título' },
-                    { key: 'fechaEgreso', label: 'Fecha de egreso', type: 'date' },
-                  ].map(f => (
-                    <div key={f.key} className={f.key === 'universidad' ? 'sm:col-span-2' : ''}>
-                      <label className="text-xs font-semibold text-slate-600 block mb-1">{f.label}</label>
-                      <input
-                        type={f.type || 'text'}
-                        value={(editData as Record<string, string>)[f.key] || ''}
-                        onChange={e => setEditData(prev => ({ ...prev, [f.key]: e.target.value }))}
-                        className="w-full h-9 px-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Documentos */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
@@ -266,42 +262,32 @@ export default function TramiteDetailPage() {
               <span className="text-xs text-slate-500">{docsValidados}/{docsTotal} validados</span>
             </div>
             <div className="divide-y divide-slate-100">
-              {docs.map(doc => {
-                const docStyle = doc.estado === 'valido'
+              {docs.length === 0 ? (
+                <div className="p-6 text-center text-slate-500 text-sm">No hay documentos adjuntos</div>
+              ) : docs.map((doc: any) => {
+                const docStyle = doc.estado_verificacion === 'valido'
                   ? 'bg-teal-50 text-teal-700 border-teal-200'
-                  : doc.estado === 'invalido'
+                  : doc.estado_verificacion === 'invalido'
                   ? 'bg-rose-50 text-rose-700 border-rose-200'
                   : 'bg-amber-50 text-amber-700 border-amber-200';
-                const docLabel = doc.estado === 'valido' ? 'Válido' : doc.estado === 'invalido' ? 'Inválido' : 'Pendiente';
+                const docLabel = doc.estado_verificacion === 'valido' ? 'Válido' : doc.estado_verificacion === 'invalido' ? 'Inválido' : 'Pendiente';
 
                 return (
                   <div key={doc.id} className="flex items-center justify-between gap-3 px-6 py-3.5">
                     <div className="flex items-center gap-3 min-w-0">
                       <FileText className="h-4 w-4 text-slate-400 flex-shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-800 truncate">{doc.tipo}</p>
-                        {!doc.url && <p className="text-xs text-slate-400">Sin archivo</p>}
+                        <p className="text-sm font-medium text-slate-800 truncate">{doc.tipo_documento}</p>
+                        {!doc.file_url && <p className="text-xs text-slate-400">Sin archivo</p>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${docStyle}`}>{docLabel}</span>
-                      {doc.url && (
-                        <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                      {doc.file_url && (
+                        <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
                           className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Ver archivo">
                           <ExternalLink className="h-3.5 w-3.5" />
                         </a>
-                      )}
-                      {doc.url && doc.estado !== 'valido' && (
-                        <button onClick={() => cambiarEstadoDoc(doc.id, 'valido')}
-                          className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors" title="Marcar válido">
-                          <CheckCircle className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                      {doc.url && doc.estado !== 'invalido' && (
-                        <button onClick={() => cambiarEstadoDoc(doc.id, 'invalido')}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Marcar inválido">
-                          <XCircle className="h-3.5 w-3.5" />
-                        </button>
                       )}
                     </div>
                   </div>
@@ -323,7 +309,7 @@ export default function TramiteDetailPage() {
               <div>
                 <label className="text-xs font-semibold text-slate-600 block mb-1.5">Cambiar estado manualmente</label>
                 <select
-                  value={user.tramite}
+                  value={app.estado}
                   onChange={e => cambiarEstadoTramite(e.target.value as EstadoTramite)}
                   className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white transition-all"
                 >
@@ -340,7 +326,7 @@ export default function TramiteDetailPage() {
                 <label className="text-xs font-semibold text-slate-600 block mb-1.5">Estado de matrícula</label>
                 <select
                   value={user.estado}
-                  onChange={e => setUser(prev => prev ? { ...prev, estado: e.target.value as EstadoMatricula } : prev)}
+                  onChange={e => handleEstadoMatriculaChange(e.target.value as EstadoMatricula)}
                   className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white transition-all"
                 >
                   <option value="activo">Activo</option>
@@ -361,7 +347,7 @@ export default function TramiteDetailPage() {
             <div className="p-4 space-y-2">
               <button
                 onClick={() => cambiarEstadoTramite('pendiente_pago')}
-                disabled={saving || user.tramite === 'matriculado' || user.tramite === 'aprobado'}
+                disabled={saving || app.estado === 'matriculado' || app.estado === 'aprobado'}
                 className="w-full flex items-center gap-3 px-4 py-3 bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold text-sm rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <CheckCircle className="h-4 w-4" />
@@ -369,22 +355,22 @@ export default function TramiteDetailPage() {
               </button>
               <button
                 onClick={() => setRechazarModal(true)}
-                disabled={saving || user.tramite === 'rechazado'}
+                disabled={saving || app.estado === 'rechazado'}
                 className="w-full flex items-center gap-3 px-4 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-sm rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <XCircle className="h-4 w-4" />
                 Rechazar Documentación
               </button>
               <button
-                onClick={() => { cambiarEstadoTramite('matriculado'); setUser(prev => prev ? { ...prev, estado: 'activo' } : prev); }}
-                disabled={saving || user.tramite === 'matriculado'}
+                onClick={() => { cambiarEstadoTramite('matriculado'); handleEstadoMatriculaChange('activo'); }}
+                disabled={saving || app.estado === 'matriculado'}
                 className="w-full flex items-center gap-3 px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <ShieldCheck className="h-4 w-4" />
                 Dar de Alta Matrícula
               </button>
               <button
-                onClick={() => { cambiarEstadoTramite('pendiente_datos'); setUser(prev => prev ? { ...prev, notas: undefined, estado: 'en_tramite' } : prev); }}
+                onClick={() => { cambiarEstadoTramite('pendiente_datos'); handleEstadoMatriculaChange('en_tramite'); }}
                 disabled={saving}
                 className="w-full flex items-center gap-3 px-4 py-3 bg-slate-50 hover:bg-slate-100 text-slate-600 font-semibold text-sm rounded-xl transition-all"
               >
@@ -408,15 +394,15 @@ export default function TramiteDetailPage() {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">Monto</span>
                 <span className="text-sm font-bold text-slate-900">
-                  ${user.montoInscripcion.toLocaleString('es-AR')} ARS
+                  ${app.monto_inscripcion?.toLocaleString('es-AR') || '15.000'} ARS
                 </span>
               </div>
-              {user.estadoPago === 'pending' && (
+              {lastPayment?.estado === 'pending' && (
                 <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                   <p className="text-xs text-amber-700 font-medium">Pago en espera de confirmación de Mercado Pago.</p>
                 </div>
               )}
-              {user.estadoPago === 'rejected' && (
+              {lastPayment?.estado === 'rejected' && (
                 <div className="mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl">
                   <p className="text-xs text-rose-700 font-medium">El pago fue rechazado. El usuario debe reintentar.</p>
                 </div>

@@ -95,6 +95,12 @@ export async function POST(request: Request) {
           .from('user_profiles')
           .update({ estado: 'activo', updated_at: new Date().toISOString() })
           .eq('matricula', app.matricula)
+
+        // También sincronizar con la tabla tramites para el portal
+        await supabase
+          .from('tramites')
+          .update({ paso_4_done: true, estado: 'activa', updated_at: new Date().toISOString() })
+          .eq('matricula', app.matricula)
       }
 
       console.log(`[Webhook MP] Pago APROBADO para application ${external_reference}`)
