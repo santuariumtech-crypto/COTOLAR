@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, Mail, LayoutDashboard } from "lucide-react";
+import { Menu, X, LayoutDashboard } from "lucide-react";
 import LogoCotolar from "@/components/LogoCotolar";
 
 const navLinks = [
@@ -56,7 +56,7 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Botones Portal + Webmail + Hamburguesa */}
+          {/* Botones Portal + Hamburguesa */}
           <div className="flex items-center gap-2">
             <Link
               href="/portal"
@@ -65,13 +65,6 @@ export default function Navbar() {
               <LayoutDashboard className="w-4 h-4" />
               Portal
             </Link>
-            <a
-              href="#"
-              className="hidden sm:flex items-center gap-2 bg-[#0f3460] hover:bg-[#1a5276] text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 group"
-            >
-              <Mail className="w-4 h-4 group-hover:animate-bounce" />
-              Webmail
-            </a>
 
             {/* Menú hamburguesa (móvil) */}
             <button
@@ -106,13 +99,6 @@ export default function Navbar() {
                 <LayoutDashboard className="w-4 h-4" />
                 Portal del Matriculado
               </Link>
-              <a
-                href="#"
-                className="flex items-center justify-center gap-2 bg-[#0f3460] text-white text-sm font-semibold px-4 py-2.5 rounded-lg w-full"
-              >
-                <Mail className="w-4 h-4" />
-                Acceso Webmail
-              </a>
             </div>
           </div>
         )}

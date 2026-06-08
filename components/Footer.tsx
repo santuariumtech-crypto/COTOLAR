@@ -26,14 +26,6 @@ export default function Footer() {
             <p className="text-blue-200 text-sm leading-relaxed">
               Organismo que regula, habilita y fiscaliza el ejercicio profesional de la Terapia Ocupacional en la provincia de La Rioja.
             </p>
-            <a
-              href="#"
-              className="inline-flex items-center gap-2 text-sm text-white bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-lg transition-colors"
-            >
-              <Mail className="w-4 h-4" />
-              Acceso Webmail
-              <ExternalLink className="w-3 h-3 opacity-60" />
-            </a>
             <div className="flex items-center gap-4 pt-2">
               <a
                 href="https://www.instagram.com/cotolar_/"
