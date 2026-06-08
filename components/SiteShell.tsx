@@ -9,7 +9,8 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
   const isPortal = pathname.startsWith("/portal");
-  const isShell = isAdmin || isPortal;
+  const isLogin = pathname.startsWith("/login");
+  const isShell = isAdmin || isPortal || isLogin;
 
   return (
     <>
