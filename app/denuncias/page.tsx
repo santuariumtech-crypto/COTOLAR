@@ -12,7 +12,7 @@ import { AlertTriangle, Upload, CheckCircle2, Loader2, ShieldAlert, Eye, EyeOff 
 const denunciaSchema = z.object({
   // Tipo de denuncia
   tipo: z.enum(["ejercicio_ilegal", "consultorio_no_habilitado", "oferta_educativa_falsa", "otro"], {
-    errorMap: () => ({ message: "Seleccioná el tipo de denuncia" })
+    message: "Seleccioná el tipo de denuncia"
   }),
 
   // Datos del denunciado
@@ -33,7 +33,7 @@ const denunciaSchema = z.object({
   denunciante_matricula: z.string().optional(),
   denunciante_email: z.string().email("Email inválido"),
 
-  confidencial: z.boolean().default(true),
+  confidencial: z.boolean(),
 });
 
 type DenunciaFormData = z.infer<typeof denunciaSchema>;
