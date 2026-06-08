@@ -2,23 +2,28 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, User, FileText, LogOut,
-  Menu, X, Bell, ChevronRight,
+  Menu, X, ChevronRight, CreditCard, MessageSquare
 } from "lucide-react";
 import { logout } from "@/app/auth/actions";
+import NotificationBell from "@/components/portal/NotificationBell";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navItems = [
   { href: "/portal", label: "Inicio", icon: LayoutDashboard },
   { href: "/portal/perfil", label: "Mi Perfil", icon: User },
   { href: "/portal/tramites", label: "Trámites", icon: FileText },
+  { href: "/portal/mensajes", label: "Mensajes", icon: MessageSquare },
+  { href: "/portal/pagos", label: "Pagos y Cuotas", icon: CreditCard },
 ];
 
 const BREADCRUMB_MAP: Record<string, string> = {
   "/portal": "Inicio",
   "/portal/perfil": "Mi Perfil",
   "/portal/tramites": "Trámites / Matriculación",
+  "/portal/mensajes": "Mensajes",
+  "/portal/pagos": "Pagos y Cuotas",
 };
 
 type Props = {
@@ -126,14 +131,14 @@ export default function PortalLayoutClient({ children, nombre, apellido, matricu
             </nav>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#1abc9c] rounded-full"></span>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <button className="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-full transition-colors ml-2">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${nombre} ${apellido}`} />
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
             </button>
-            <div className="w-9 h-9 rounded-full bg-[#0f3460] flex items-center justify-center text-white font-bold text-sm">
-              {initials}
-            </div>
           </div>
         </header>
 

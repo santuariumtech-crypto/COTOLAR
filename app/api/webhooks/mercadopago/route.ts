@@ -61,6 +61,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Sin external_reference' }, { status: 400 })
     }
 
+    // ─── LÓGICA DE SUSCRIPCIONES / CUOTA MENSUAL ───
+    if (external_reference.startsWith('SUB_')) {
+      const matricula = external_reference.replace('SUB_', '')
+      
+      if (status === 'approved') {
+        const fecha = new Date()
+        const mes = fecha.getMonth() + 1
+        const anio = fecha.getFullYear()
+        
+        // Guardar el pago de la cuota mensual
+        await supabase
+          .from('monthly_payments')
+          .upsert({
+            matricula,
+            mes,
+            anio,
+            monto: transaction_amount,
+            estado: 'pagado',
+            metodo_pago: payment_method_id,
+            mp_payment_id: String(mp_payment_id),
+            fecha_pago: fecha.toISOString()
+          }, { onConflict: 'matricula, mes, anio' })
+          
+        console.log(`[Webhook MP] Cuota mensual APROBADA para matrícula ${matricula}`)
+      }
+      
+      return NextResponse.json({ received: true, status, type: 'subscription' })
+    }
+
+    // ─── LÓGICA DE PAGO DE TRÁMITE INICIAL ───
     // 2. Actualizar tabla payments
     await supabase
       .from('payments')

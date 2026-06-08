@@ -6,6 +6,7 @@ import {
   Download, CreditCard, CheckCircle2, Clock,
   AlertCircle, ArrowRight, FileText, User, Shield, TrendingUp, Loader2,
 } from "lucide-react";
+import DownloadCertButton from "@/components/portal/DownloadCertButton";
 
 type TramiteData = {
   paso_1_done: boolean;
@@ -168,22 +169,13 @@ export default function PortalHomePage() {
           <ArrowRight className="h-4 w-4 text-slate-300 ml-auto group-hover:text-[#1abc9c] group-hover:translate-x-1 transition-all" />
         </button>
 
-        <button
-          disabled={!isActiva}
-          title={!isActiva ? "Disponible una vez aprobada la matrícula" : ""}
-          className="group flex items-center gap-4 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-[#0f3460]/40 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-[#0f3460] transition-colors">
-            <Download className="h-6 w-6 text-[#0f3460] group-hover:text-white transition-colors" />
-          </div>
-          <div>
-            <p className="font-bold text-slate-900 text-sm">Descargar Credencial</p>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {isActiva ? "Descargá tu credencial profesional en PDF" : "Disponible tras aprobación de matrícula"}
-            </p>
-          </div>
-          <ArrowRight className="h-4 w-4 text-slate-300 ml-auto group-hover:text-[#0f3460] group-hover:translate-x-1 transition-all" />
-        </button>
+        <DownloadCertButton
+          nombre={profile?.nombre || ""}
+          apellido={profile?.apellido || ""}
+          matricula={profile?.matricula || ""}
+          dni={profile?.dni}
+          isActiva={isActiva}
+        />
       </div>
 
       {/* Aviso dinámico */}

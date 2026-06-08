@@ -1,6 +1,7 @@
 "use client";
 
-import { Bell, Search, User } from "lucide-react";
+import { Search, User } from "lucide-react";
+import NotificationBell from "@/components/portal/NotificationBell";
 
 export default function Header() {
   return (
@@ -17,12 +18,7 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-6">
-        <button className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-100">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-2 top-2 flex h-2 w-2 rounded-full bg-rose-500">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75"></span>
-          </span>
-        </button>
+        <NotificationBell />
 
         <div className="h-8 w-[1px] bg-slate-200"></div>
 

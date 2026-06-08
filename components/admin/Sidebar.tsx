@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Mail, Settings, LogOut, Activity, Image, FileText } from "lucide-react";
+import { LayoutDashboard, Users, Mail, Settings, LogOut, Activity, Image, FileText, MessageSquare } from "lucide-react";
 import { logout } from "@/app/auth/actions";
 
 const navigation = [
@@ -10,6 +10,7 @@ const navigation = [
   { name: "Matriculados", href: "/admin/matriculados", icon: Users },
   { name: "Trámites", href: "/admin/tramite", icon: FileText },
   { name: "Mensajes", href: "/admin/mensajes", icon: Mail },
+  { name: "Buzón (Inbox)", href: "/admin/inbox", icon: MessageSquare },
   { name: "Imágenes", href: "/admin/imagenes", icon: Image },
   { name: "Configuración", href: "/admin/settings", icon: Settings },
 ];
