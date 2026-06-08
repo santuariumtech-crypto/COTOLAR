@@ -7,9 +7,9 @@ import ChatWidget from "@/components/ChatWidget";
 
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAdmin = pathname.startsWith("/admin");
-  const isPortal = pathname.startsWith("/portal");
-  const isLogin = pathname.startsWith("/login");
+  const isAdmin = pathname?.startsWith("/admin") ?? false;
+  const isPortal = pathname?.startsWith("/portal") ?? false;
+  const isLogin = pathname?.startsWith("/login") ?? false;
   const isShell = isAdmin || isPortal || isLogin;
 
   return (
