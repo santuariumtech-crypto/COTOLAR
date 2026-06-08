@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Users, Mail, Settings, LogOut, Activity, Image, FileText } from "lucide-react";
+import { logout } from "@/app/auth/actions";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -56,13 +57,15 @@ export default function Sidebar() {
       </div>
 
       <div className="p-4 border-t border-slate-800/80">
-        <Link
-          href="/"
-          className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition-all duration-200 hover:bg-rose-500/10 hover:text-rose-400"
-        >
-          <LogOut className="h-5 w-5" />
-          Cerrar Sesión
-        </Link>
+        <form action={logout}>
+          <button
+            type="submit"
+            className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition-all duration-200 hover:bg-rose-500/10 hover:text-rose-400 text-left"
+          >
+            <LogOut className="h-5 w-5" />
+            Cerrar Sesión
+          </button>
+        </form>
       </div>
     </div>
   );
