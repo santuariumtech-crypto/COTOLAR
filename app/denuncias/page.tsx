@@ -12,7 +12,7 @@ import { AlertTriangle, Upload, CheckCircle2, Loader2, ShieldAlert, Eye, EyeOff 
 const denunciaSchema = z.object({
   // Tipo de denuncia
   tipo: z.enum(["ejercicio_ilegal", "consultorio_no_habilitado", "oferta_educativa_falsa", "otro"], {
-    required_error: "Seleccioná el tipo de denuncia",
+    errorMap: () => ({ message: "Seleccioná el tipo de denuncia" })
   }),
 
   // Datos del denunciado
