@@ -20,23 +20,6 @@ export default function NotificationBell() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
-  useEffect(() => {
-    // 1. Obtener usuario actual
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUserId(user.id);
-        fetchNotifications(user.id);
-        subscribeToNotifications(user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      supabase.removeAllChannels();
-    };
-  }, []);
-
   const fetchNotifications = async (uid: string) => {
     const { data } = await supabase
       .from("notifications")
@@ -62,6 +45,23 @@ export default function NotificationBell() {
       )
       .subscribe();
   };
+
+  useEffect(() => {
+    // 1. Obtener usuario actual
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setUserId(user.id);
+        fetchNotifications(user.id);
+        subscribeToNotifications(user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      supabase.removeAllChannels();
+    };
+  }, []);
 
   const markAsRead = async () => {
     if (!userId) return;

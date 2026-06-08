@@ -262,6 +262,7 @@ export default function TramitesPage() {
     }
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchTramite(); }, [fetchTramite]);
 
   const handleComplete = (updates: Partial<TramiteData>) => {

@@ -16,7 +16,7 @@ export default function TestLogoPage() {
         <p className="text-gray-600 text-sm mb-6">
           Esta es una propuesta basada en tu referencia. El mapa de fondo (las formas celestes y azules)
           tiene un estilo poligonal/geométrico inspirado en la silueta de la provincia de <strong>La Rioja</strong>,
-          y las letras "TO" resaltan en blanco tal como solicitaste.
+          y las letras &quot;TO&quot; resaltan en blanco tal como solicitaste.
         </p>
 
         <p className="text-blue-600 font-semibold text-sm">

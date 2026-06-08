@@ -23,12 +23,6 @@ export default function HeroCarousel() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (banners.length <= 1) return;
-    const timer = setInterval(() => goNext(), 6000);
-    return () => clearInterval(timer);
-  }, [banners.length, current]);
-
   const goNext = () => {
     if (isAnimating) return;
     setIsAnimating(true);
@@ -42,6 +36,12 @@ export default function HeroCarousel() {
     setCurrent(c => (c - 1 + banners.length) % banners.length);
     setTimeout(() => setIsAnimating(false), 500);
   };
+
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const timer = setInterval(() => goNext(), 6000);
+    return () => clearInterval(timer);
+  }, [banners.length, current, isAnimating]);
 
   const banner = banners[current];
 
