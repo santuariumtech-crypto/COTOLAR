@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/lib/supabase";
 
 type TramiteData = {
+  id?: string;
   paso_1_done: boolean;
   paso_2_done: boolean;
   paso_3_done: boolean;
